@@ -1,8 +1,21 @@
 [package]
 name = "modlem"
-version = "0.1.0"
+authors = ["David Gow <david@davidgow.net>"]
+version = "0.4.0"
 edition = "2015"
+homepage = "https://davidgow.net/hacks/modlem.html"
+license = "LGPL-3.0-or-later"
+autobins = false # We don't want confusion with 'main' and the 'main.dat' file
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[[bin]]
+name = "modlem"
+path = "src/modlem.rs"
+
+[lints.rust]
+dead_code = "allow"
+
+[build]
 
 [dependencies]
