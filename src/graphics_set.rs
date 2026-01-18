@@ -666,7 +666,7 @@ pub fn create_graphics_set(lexer : &mut parser::Lexer) {
                 object_header.animation_offset = object_data.len() as u16;
                 object_header.width = object_width as u8;
                 object_header.height = frame_height as u8;
-                object_header.animation_frame_data_size = (object_bmp.width * frame_height / 2) as u16;
+                object_header.animation_frame_data_size = ((object_bmp.width * frame_height / 8) * 5) as u16;
                 object_header.preview_frame_offset = object_header.animation_offset + (object_header.animation_frame_data_size * object_header.preview_frame_number as u16);
 
                 for frame in 0..object_header.frame_end as usize {
