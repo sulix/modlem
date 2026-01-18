@@ -54,7 +54,9 @@ impl<'a> Lexer<'a> {
 
     /// Peek at the next token in the stream. Can only be used once between token reads.
     pub fn peek_token(&mut self) -> Option<Token<'a>> {
-        assert!(self.buffered_token.is_none());
+        if self.buffered_token.is_some() {
+            return self.buffered_token.clone();
+        }
         let tok = self.next_token();
         if tok.is_some() {
             self.unget_token(tok.clone().unwrap());
@@ -89,6 +91,11 @@ impl<'a> Lexer<'a> {
 
     /// Return the next token, if any.
     pub fn next_token(&mut self) -> Option<Token<'a>> {
+        if self.buffered_token.is_some() {
+            let tok = self.buffered_token.clone();
+            self.buffered_token = None;
+            return tok;
+        }
         self.eat_whitespace();
         let start_offset = self.offset;
         loop {
@@ -268,4 +275,30 @@ mod tests {
         assert_eq!(lexer.next_token().unwrap(), Token::StringLiteral("test.txt".to_string()));
         assert!(lexer.next_token().is_none());
     }
+    #[test]
+    fn lexer_expect_ident() {
+        let test_input = "IdentA IdentB";
+        let mut lexer = Lexer::from_str(test_input);
+        lexer.expect_ident("IdentA");
+        assert_eq!(lexer.next_token().unwrap(), Token::Ident("IdentB"));
+    }
+
+    #[test]
+    fn lexer_is_next_ident() {
+        let test_input = "Terrain \"test\" Mask \"mask\"";
+        let mut lexer = Lexer::from_str(test_input);
+        assert!(lexer.is_next_ident("Terrain"));
+        // Doesn't advance the lexer
+        lexer.expect_ident("Terrain");
+        assert!(!lexer.is_next_ident("Terrain"));
+        assert_eq!(lexer.next_token().unwrap(), Token::StringLiteral("test".to_string()));
+        assert!(lexer.is_next_ident("Mask"));
+        // Doesn't advance the lexer
+        assert_eq!(lexer.next_token().unwrap(), Token::Ident("Mask"));
+        assert!(!lexer.is_next_ident("Mask"));
+        assert_eq!(lexer.next_token().unwrap(), Token::StringLiteral("mask".to_string()));
+        // Not true at EOF
+        assert!(!lexer.is_next_ident("Mask"));
+    }
+
 }
