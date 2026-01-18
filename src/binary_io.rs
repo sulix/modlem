@@ -21,35 +21,35 @@
 pub fn read_byte(reader: &mut dyn std::io::Read) -> std::io::Result<u8> {
     let mut out_byte : u8 = 0;
     reader.read_exact(std::slice::from_mut(&mut out_byte))?;
-    return Ok(out_byte);
+    Ok(out_byte)
 }
 
 /// Reads a little-endian unsigned 16-bit integer from a stream.
 pub fn read_le16(reader : &mut dyn std::io::Read) -> std::io::Result<u16> {
-    let mut raw_bytes = [0 as u8; 2];
+    let mut raw_bytes = [0_u8; 2];
     reader.read_exact(&mut raw_bytes)?;
-    return Ok(u16::from_le_bytes(raw_bytes));
+    Ok(u16::from_le_bytes(raw_bytes))
 }
 
 /// Reads a little-endian unsigned 32-bit integer from a stream.
 pub fn read_le32(reader : &mut dyn std::io::Read) -> std::io::Result<u32> {
-    let mut raw_bytes = [0 as u8; 4];
+    let mut raw_bytes = [0_u8; 4];
     reader.read_exact(&mut raw_bytes)?;
-    return Ok(u32::from_le_bytes(raw_bytes));
+    Ok(u32::from_le_bytes(raw_bytes))
 }
 
 /// Reads a big-endian unsigned 16-bit integer from a stream.
 pub fn read_be16(reader : &mut dyn std::io::Read) -> std::io::Result<u16> {
-    let mut raw_bytes = [0 as u8; 2];
+    let mut raw_bytes = [0_u8; 2];
     reader.read_exact(&mut raw_bytes)?;
-    return Ok(u16::from_be_bytes(raw_bytes));
+    Ok(u16::from_be_bytes(raw_bytes))
 }
 
 /// Reads a big-endian unsigned 32-bit integer from a stream.
 pub fn read_be32(reader : &mut dyn std::io::Read) -> std::io::Result<u32> {
-    let mut raw_bytes = [0 as u8; 4];
+    let mut raw_bytes = [0_u8; 4];
     reader.read_exact(&mut raw_bytes)?;
-    return Ok(u32::from_be_bytes(raw_bytes));
+    Ok(u32::from_be_bytes(raw_bytes))
 }
 
 /// Writes a single byte (unsigned, 8-bit integer) to a stream.
