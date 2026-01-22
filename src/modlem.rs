@@ -100,7 +100,7 @@ fn extract_dat(name: &std::string::String) {
     let dat_filename = format!("{}.dat", name);
     let dat_path = case_sensitivity::find_file_in_current_dir(&dat_filename).unwrap();
 
-    let mut data = match File::open(&dat_path) {
+    let mut data = match File::open(dat_path) {
         Err(err) => panic!("Error opening {}: {}", dat_filename, err),
         Ok(file) => file,
     };
@@ -126,7 +126,7 @@ fn create_dat(name: &std::string::String) {
     let dat_filename = format!("{}.dat", name);
     let dat_path = Path::new(&dat_filename);
 
-    let mut data = match File::create(&dat_path) {
+    let mut data = match File::create(dat_path) {
         Err(err) => panic!("Error opening {}: {}", dat_filename, err),
         Ok(file) => file,
     };
@@ -201,12 +201,12 @@ fn main() {
         "extract-dat" => {
             let dat_name = &args[2];
             println!("Extracting {}.dat…", dat_name);
-            extract_dat(&dat_name);
+            extract_dat(dat_name);
         }
         "create-dat" => {
             let dat_name = &args[2];
             println!("Create {}.dat…", dat_name);
-            create_dat(&dat_name);
+            create_dat(dat_name);
         }
         invalid_cmd => {
             panic!("Unknown command \"{}\"", invalid_cmd);

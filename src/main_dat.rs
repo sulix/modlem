@@ -520,7 +520,7 @@ fn extract_anims(data: &Vec<u8>, anims: &[LemmingsAnim], name: &str, pal: &Palet
             anim.width,
             anim.height * anim.num_frames,
             anim.planes,
-            &pal,
+            pal,
         );
         for frame in 0..anim.num_frames {
             println!("Extracting {} {} frame #{}", name, anim.name, frame);
@@ -530,7 +530,7 @@ fn extract_anims(data: &Vec<u8>, anims: &[LemmingsAnim], name: &str, pal: &Palet
                 anim.width,
                 anim.height,
                 anim.planes,
-                &pal,
+                pal,
             );
             running_offset += planar_size * anim.planes;
             filmstrip_image.blit(&converted_image, 0, frame * anim.height);
@@ -585,30 +585,30 @@ pub fn extract_main_dat(image: &mut dyn std::io::Read, xmas_mode: bool) {
     let mut lemming_anim_section = DatSection::from_file(image).unwrap();
     let lemming_anim_data = lemming_anim_section.decompress();
 
-    extract_anims(&lemming_anim_data, &LEMMINGS_ANIMS, "lemming", &pal);
+    extract_anims(&lemming_anim_data, LEMMINGS_ANIMS, "lemming", &pal);
 
     let mut lemming_mask_section = DatSection::from_file(image).unwrap();
     let lemming_mask_data = lemming_mask_section.decompress();
-    extract_anims(&lemming_mask_data, &LEMMINGS_MASKS, "mask", &pal);
+    extract_anims(&lemming_mask_data, LEMMINGS_MASKS, "mask", &pal);
 
     let mut lemming_interface_hi_section = DatSection::from_file(image).unwrap();
     let lemming_interface_hi_data = lemming_interface_hi_section.decompress();
     extract_anims(
         &lemming_interface_hi_data,
-        &LEMMINGS_INTERFACE_HI,
+        LEMMINGS_INTERFACE_HI,
         "interface_hi",
         &hiperf_pal,
     );
 
     let mut lemming_mainmenu_section = DatSection::from_file(image).unwrap();
     let lemming_mainmenu_data = lemming_mainmenu_section.decompress();
-    extract_anims(&lemming_mainmenu_data, &LEMMINGS_MAINMENU, "menu", &menupal);
+    extract_anims(&lemming_mainmenu_data, LEMMINGS_MAINMENU, "menu", &menupal);
 
     let mut lemming_menuanim_section = DatSection::from_file(image).unwrap();
     let lemming_menuanim_data = lemming_menuanim_section.decompress();
     extract_anims(
         &lemming_menuanim_data,
-        &LEMMINGS_MENUANIM,
+        LEMMINGS_MENUANIM,
         "menuanim",
         &menupal,
     );
@@ -625,7 +625,7 @@ pub fn extract_main_dat(image: &mut dyn std::io::Read, xmas_mode: bool) {
     let interface_lo_data = interface_lo_section.decompress();
     extract_anims(
         &interface_lo_data,
-        &LEMMINGS_INTERFACE_LO,
+        LEMMINGS_INTERFACE_LO,
         "interface_lo",
         &pal,
     );
@@ -636,7 +636,7 @@ fn compress_anims(anims: &[LemmingsAnim], name: &str) -> DatSection {
     for anim in anims {
         let infile_name = format!("{}_{}.bmp", name, anim.name);
         let infile_path = Path::new(infile_name.as_str());
-        let mut infile = match File::open(&infile_path) {
+        let mut infile = match File::open(infile_path) {
             Err(err) => panic!("Error opening {}: {}", infile_name, err),
             Ok(file) => file,
         };

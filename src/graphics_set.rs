@@ -623,7 +623,7 @@ pub fn create_graphics_set(lexer : &mut parser::Lexer) {
                     // Extract the mask from the same bitmap.
                     terrain_data.append(&mut terrain_bmp.get_plane_data(0, terrain_width, 0, terrain_width, terrain_bmp.height));
                 } else {
-                    let mut mask_file = std::fs::File::open(&mask_fname.unwrap()).unwrap();
+                    let mut mask_file = std::fs::File::open(mask_fname.unwrap()).unwrap();
                     let mask_bmp = planar_bmp::PlanarBMP::from_file(&mut mask_file).unwrap();
                     assert_eq!(terrain_width, mask_bmp.width);
                     assert_eq!(terrain_bmp.height, mask_bmp.height);
@@ -706,7 +706,7 @@ pub fn create_graphics_set(lexer : &mut parser::Lexer) {
     // Open the output file
     let data_path = Path::new(&data_filename);
 
-    let mut data = match File::create(&data_path) {
+    let mut data = match File::create(data_path) {
         Err(err) => panic!("Error opening {}: {}", data_filename, err),
         Ok(file) => file,
     };
@@ -717,7 +717,7 @@ pub fn create_graphics_set(lexer : &mut parser::Lexer) {
 
     // Now write out the headers
     let header_path = Path::new(&header_filename);
-    let mut header = match File::create(&header_path) {
+    let mut header = match File::create(header_path) {
         Err(err) => panic!("Error opening {}: {}", header_filename, err),
         Ok(file) => file,
     };
