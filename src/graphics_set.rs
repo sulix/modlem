@@ -51,15 +51,15 @@ pub struct ObjectHeader
 
 impl std::fmt::Display for ObjectHeader {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{{\n")?;
-        write!(f, "\tanimation_flags = {}\n", self.animation_flags)?;
-        write!(f, "\tframes = ({},{})\n", self.frame_start, self.frame_end)?;
-        //write!(f, "\tsize = ({},{})\n", self.width, self.height)?;
-        write!(f, "\ttrigger = ({},{},{},{})\n", self.trigger_x, self.trigger_y, self.trigger_w, self.trigger_h)?;
-        write!(f, "\ttrigger_effect = {}\n", self.trigger_effect_id)?;
-        write!(f, "\tpreview_frame = {}\n", self.preview_frame_number)?;
-        write!(f, "\ttrap_sound = {}\n", self.trap_sound)?;
-        write!(f, "}}")
+        writeln!(f, "{{\n")?;
+        writeln!(f, "\tanimation_flags = {}\n", self.animation_flags)?;
+        writeln!(f, "\tframes = ({},{})\n", self.frame_start, self.frame_end)?;
+        //writeln!(f, "\tsize = ({},{})\n", self.width, self.height)?;
+        writeln!(f, "\ttrigger = ({},{},{},{})\n", self.trigger_x, self.trigger_y, self.trigger_w, self.trigger_h)?;
+        writeln!(f, "\ttrigger_effect = {}\n", self.trigger_effect_id)?;
+        writeln!(f, "\tpreview_frame = {}\n", self.preview_frame_number)?;
+        writeln!(f, "\ttrap_sound = {}\n", self.trap_sound)?;
+        writeln!(f, "}}")
     }
 }
 
@@ -522,7 +522,7 @@ pub fn extract_graphics_set(script : &mut dyn std::io::Write, header_file : &mut
             let out_path = Path::new(outfile_name.as_str());
             let mut output_file = File::create(out_path).unwrap();
             output_image.save_as_file(&mut output_file);
-            write!(script, "Terrain \"{}\"\n", outfile_name).unwrap();
+            writeln!(script, "Terrain \"{}\"", outfile_name).unwrap();
         }
         else {
             let maskfile_name = options.terrain_mask_filename_pattern.unwrap().replace("#", &i.to_string());
@@ -532,7 +532,7 @@ pub fn extract_graphics_set(script : &mut dyn std::io::Write, header_file : &mut
             let mut mask_file = File::create(mask_path).unwrap();
             terrain_image.save_as_file(&mut output_file);
             mask_image_1bpp.save_as_file(&mut mask_file);
-            write!(script, "Terrain \"{}\" Mask \"{}\"\n", outfile_name, maskfile_name).unwrap();
+            writeln!(script, "Terrain \"{}\" Mask \"{}\"", outfile_name, maskfile_name).unwrap();
         }
     }
 
@@ -546,10 +546,10 @@ pub fn extract_graphics_set(script : &mut dyn std::io::Write, header_file : &mut
 
         let mask_fname = if options.object_mask_filename_pattern.is_some() { Some(options.object_mask_filename_pattern.unwrap().replace("#", &i.to_string())) } else { None };
         let mut mask_bmp = if mask_fname.is_some() {
-            write!(script, "Object \"{}\" Mask \"{}\" = {}\n", outfile_name, mask_fname.as_ref().unwrap(), obj_headers[i]).unwrap();
+            writeln!(script, "Object \"{}\" Mask \"{}\" = {}", outfile_name, mask_fname.as_ref().unwrap(), obj_headers[i]).unwrap();
             Some(planar_bmp::PlanarBMP::new(filmstrip_width, obj_header.height as usize * obj_header.frame_end as usize, 1, &pal))
         } else {
-            write!(script, "Object \"{}\" = {}\n", outfile_name, obj_headers[i]).unwrap();
+            writeln!(script, "Object \"{}\" = {}", outfile_name, obj_headers[i]).unwrap();
             None
         };
 
@@ -580,7 +580,7 @@ pub fn extract_graphics_set(script : &mut dyn std::io::Write, header_file : &mut
         }
     }
 
-    write!(script, "Palettes = {}\n", &all_pals).unwrap();
+    writeln!(script, "Palettes = {}", &all_pals).unwrap();
 }
 
 pub fn create_graphics_set(lexer : &mut parser::Lexer) {

@@ -61,8 +61,9 @@ fn cmd_extract_graphics_set(graphics_set: usize) {
     };
 
     // Write the header for the graphics set script.
-    write!(script_writer, "HeaderFile \"{}\"\n", ground_filename).unwrap();
-    write!(script_writer, "DataFile \"{}\"\n\n", data_filename).unwrap();
+    writeln!(script_writer, "HeaderFile \"{}\"", ground_filename).unwrap();
+    writeln!(script_writer, "DataFile \"{}\"", data_filename).unwrap();
+    writeln!(script_writer).unwrap();
 
     graphics_set::extract_graphics_set(
         &mut script_writer,
