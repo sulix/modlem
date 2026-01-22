@@ -279,7 +279,7 @@ impl PlanarBMP {
     /// Create a new empty (all palette entry 0) bitmap, of size @width×@height, and @planes planes.
     pub fn new(width: usize, height: usize, planes: usize, palette : &PaletteRGB) -> PlanarBMP {
         assert!(planes <= 8);
-        let pitch = (width + 7) / 8;
+        let pitch = width.div_ceil(8);
         let plane_size = pitch * height;
         PlanarBMP {
             width,
@@ -293,7 +293,7 @@ impl PlanarBMP {
 
     /// Create a new bitmap from 'contiguous' data, i.e., where all of plane 0 is stored, followed immediately by plane 1, etc.
     pub fn from_contiguous_data(data: &[u8], width: usize, height: usize, planes: usize, palette: &PaletteRGB) -> PlanarBMP {
-        let pitch = (width + 7) / 8;
+        let pitch = width.div_ceil(8);
         PlanarBMP {
             width,
             height,
@@ -309,7 +309,6 @@ impl PlanarBMP {
     /// Note: only supports 8 and 4 plane images.
     pub fn from_packed_data(data: &[u8], width: usize, height: usize, planes: usize, palette: &PaletteRGB) -> PlanarBMP {
         let mut planar_data = std::vec::Vec::<u8>::new();
-        println!("from packed data: planes = {}", planes);
         // Windows bitmaps have scanlines aligned on 32-bit boundaries.
         let scanline_size = (width * planes) / 8;
         let pitch = (scanline_size + 3) & !3;
@@ -526,8 +525,7 @@ impl PlanarBMP {
     }
 
     pub fn save_as_bpp(&self, bpp : usize, writer : &mut dyn std::io::Write) {
-        let pitch = (((self.width * bpp + 7) / 8) + 3) & !3;
-        println!("pitch = {}, width = {}, bpp = {} ", pitch, self.width, bpp);
+        let pitch = ((self.width * bpp).div_ceil(8) + 3) & !3;
         let data_size = pitch * self.height;
         let num_colours = std::cmp::min(self.palette.colours.len(), 1 << bpp);
         let data_offset = BitmapFileHeader::STRUCT_SIZE + BitmapInfoHeader::STRUCT_SIZE + 4 * num_colours;
