@@ -109,7 +109,7 @@ fn extract_dat(name: &std::string::String) {
     loop {
         let section_res = DatSection::from_file(&mut data);
         match section_res {
-            Err(__) => break,
+            Err(_) => break,
             Ok(mut header) => {
                 let section_data = header.decompress();
                 let outfile_name = format!("{}.{:03}", name, section_num);
@@ -137,7 +137,7 @@ fn create_dat(name: &std::string::String) {
         let section_path = Path::new(section_file_name.as_str());
         let section_uncomp_data = std::fs::read(section_path);
         match section_uncomp_data {
-            Err(__) => break,
+            Err(_) => break,
             Ok(uncomp_data) => {
                 let section = DatSection::from_data(uncomp_data.as_slice(), uncomp_data.len());
                 section.write(&mut data).unwrap();
