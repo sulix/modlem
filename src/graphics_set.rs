@@ -15,6 +15,8 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#![allow(clippy::identity_op)]
+
 use std::convert::TryInto;
 use std::fs::File;
 use std::path::Path;
