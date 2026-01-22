@@ -86,6 +86,7 @@ impl DatSection
             let mut best_match_2 : Option<usize> = None;
             let mut best_match_3 : Option<usize> = None;
             let mut best_match_4 : Option<usize> = None;
+            let mut have_usable_match = false;
             while j < i + 4096 {
                 let mut match_len = 0;
                 if j >= uncomp_size {
@@ -100,28 +101,28 @@ impl DatSection
                     }
                     match_len += 1;
                     if match_len == 2 && j < i + 256 {
-                        best_match_2 = Some(j)
+                        have_usable_match = true;
+                        best_match_2 = Some(j);
                     } else if match_len == 3 && j < i + 512 {
-                        best_match_3 = Some(j)
+                        have_usable_match = true;
+                        best_match_3 = Some(j);
                     } else if match_len == 4 && j < i + 1024 {
-                        best_match_4 = Some(j)
+                        have_usable_match = true;
+                        best_match_4 = Some(j);
                     }
                 }
                 if match_len >= longest_len {
                     longest_len = match_len;
                     longest_off = j;
+                    if longest_len > 4 {
+                        have_usable_match = true;
+                    }
                 }
                 j += 1;
             }
 
             // If we have a match which is better than nothing.
-            let mut have_match = false;
-            if longest_len > 4 { have_match = true; }
-            else if best_match_4 != None {have_match = true; }
-            else if best_match_3 != None {have_match = true; }
-            else if best_match_2 != None {have_match = true; }
-
-            if have_match {
+            if have_usable_match {
                 // Flush any uncompressed / literal data.
                 while last_uncomp_off < i {
                     // We can output at most 265 (256 + 9) bytes in a single literal.
@@ -152,19 +153,19 @@ impl DatSection
                     dat_section.add_bits(12, offset);
                     dat_section.add_bits(8, (longest_len - 1) as u32);
                     dat_section.add_bits(3, 6);
-                } else if best_match_4 != None {
+                } else if let Some(match_offset) = best_match_4 {
                     // Otherwise, try a 4-byte match (13 bits to save 32)
-                    dat_section.add_bits(10, (best_match_4.unwrap() - i - 1) as u32);
+                    dat_section.add_bits(10, (match_offset - i - 1) as u32);
                     dat_section.add_bits(3, 5);
                     longest_len = 4;
-                } else if best_match_3 != None {
+                } else if let Some(match_offset) = best_match_3 {
                     // Or, a 3-byte match (12 bits to save 24)
-                    dat_section.add_bits(9, (best_match_3.unwrap() - i - 1) as u32);
+                    dat_section.add_bits(9, (match_offset - i - 1) as u32);
                     dat_section.add_bits(3, 4);
                     longest_len = 3;
-                } else if best_match_2 != None {
+                } else if let Some(match_offset) = best_match_2 {
                     // Or a 2-byte match (10 bits to save 16)
-                    dat_section.add_bits(8, (best_match_2.unwrap() - i - 1) as u32);
+                    dat_section.add_bits(8, (match_offset - i - 1) as u32);
                     dat_section.add_bits(2, 1);
                     longest_len = 2;
                 } else {
@@ -221,8 +222,7 @@ impl DatSection
         let uncomp_size = read_be32(reader)?;
         let comp_size = read_be32(reader)?;
 
-        let mut comp_data = std::vec::Vec::<u8>::new();
-        comp_data.resize((comp_size - 10) as usize, 0);
+        let mut comp_data = vec![0; (comp_size - 10) as usize];
         reader.read_exact(&mut comp_data)?;
         let mut data_checksum = 0;
         for b in &comp_data {
@@ -238,7 +238,7 @@ impl DatSection
                 checksum,
                 num_bits_in_first_byte: if num_bits_in_first_byte == 0 { 8 } else { num_bits_in_first_byte },
                 byte_offset: comp_size - if num_bits_in_first_byte == 0 { 12 } else { 11 } as u32,
-                bit_offset : 0 as u32,
+                bit_offset : 0_u32,
                 comp_data
             })
         }
@@ -286,9 +286,9 @@ impl DatSection
                         0 => {
                             // Raw bytes.
                             let len = self.read_bits(3) + 1;
-                            i = i + 1;
+                            i += 1;
                             for _b in 0..len {
-                                i = i - 1;
+                                i -= 1;
                                 output[i] = self.read_bits(8) as u8;
                             }
                         }
