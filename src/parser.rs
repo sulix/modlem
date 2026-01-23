@@ -212,7 +212,7 @@ impl<'a> Lexer<'a> {
         }
         let tok_value = tok.unwrap();
         if let Token::StringLiteral(str_val) = tok_value {
-            return str_val;
+            str_val
         } else {
             panic!("Expected string on line {}, but got {:?}!", line, tok_value);
         }
@@ -227,7 +227,7 @@ impl<'a> Lexer<'a> {
         }
         let tok_value = tok.unwrap();
         if let Token::NumericLiteral(int_val) = tok_value {
-            return int_val;
+            int_val
         } else {
             panic!("Expected integer literal on line {}, but got {:?}!", line, tok_value);
         }
