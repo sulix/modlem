@@ -512,7 +512,7 @@ static LEMMINGS_INTERFACE_LO: &[LemmingsAnim] = &[
     },
 ];
 
-fn extract_anims(data: &Vec<u8>, anims: &[LemmingsAnim], name: &str, pal: &PaletteRGB) {
+fn extract_anims(data: &[u8], anims: &[LemmingsAnim], name: &str, pal: &PaletteRGB) {
     let mut running_offset: usize = 0;
     for anim in anims {
         let outfile_name = format!("{}_{}.bmp", name, anim.name);
