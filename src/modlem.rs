@@ -187,8 +187,8 @@ fn main() {
         }
         "extract-main" => {
             let mut xmas_mode = false;
-            let mut arg_iter = args.iter().skip(2);
-            while let Some(arg) = arg_iter.next() {
+            let arg_iter = args.iter().skip(2);
+            for arg in arg_iter {
                 match arg.as_str() {
                     "--xmas" | "--christmas" => xmas_mode = true,
                     _ => panic!("Unknown argument \"{}\"", arg),
