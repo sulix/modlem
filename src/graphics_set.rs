@@ -507,15 +507,14 @@ pub fn extract_graphics_set(script : &mut dyn std::io::Write, header_file : &mut
         pal.set_vga_data(8, 8, all_pals.vga_custom.as_slice());
     }
 
-    for i in 0..64 {
-        let terrain_header = &terrain_headers[i];
+    for (i, terrain_header) in terrain_headers.iter().enumerate() {
         if terrain_header.width == 0 { break; }
         let outfile_name = options.terrain_filename_pattern.replace("#", &i.to_string());
         let plane_size = terrain_header.width as usize * terrain_header.height as usize / 8;
         let image_size = plane_size * 4;
         let terrain_image = planar_bmp::PlanarBMP::from_contiguous_data(&terrain_data[terrain_header.gfx_offset as usize..(terrain_header.gfx_offset as usize + image_size)], terrain_header.width as usize, terrain_header.height as usize, 4, &pal);
         let mask_image_1bpp = planar_bmp::PlanarBMP::from_contiguous_data(&terrain_data[terrain_header.mask_offset as usize..(terrain_header.mask_offset as usize + plane_size)], terrain_header.width as usize, terrain_header.height as usize, 1, &pal);
-        if options.terrain_mask_filename_pattern == None {
+        if options.terrain_mask_filename_pattern.is_none() {
             // Combine the mask and image into one
             let mut output_image = planar_bmp::PlanarBMP::new(terrain_header.width as usize * 2, terrain_header.height as usize, 4, &pal);
             let mask_image_4bpp = planar_bmp::PlanarBMP::from_swizzle(&mask_image_1bpp, vec![0, 0, 0, 0]);
@@ -538,8 +537,7 @@ pub fn extract_graphics_set(script : &mut dyn std::io::Write, header_file : &mut
         }
     }
 
-    for i in 0..16 {
-        let obj_header = &obj_headers[i];
+    for (i, obj_header) in obj_headers.iter().enumerate() {
         if obj_header.width == 0 { break; }
         let filmstrip_width = obj_header.width as usize * if options.object_mask_filename_pattern.is_none() { 2 } else { 1 };
         let mut filmstrip_image = planar_bmp::PlanarBMP::new(filmstrip_width, obj_header.height as usize * obj_header.frame_end as usize, 4, &pal);
@@ -564,9 +562,9 @@ pub fn extract_graphics_set(script : &mut dyn std::io::Write, header_file : &mut
             let object_image = planar_bmp::PlanarBMP::from_contiguous_data(&object_data[frame_offset..(frame_offset + plane_len * 4)], obj_header.width as usize, obj_header.height as usize, 4, &pal);
             let object_mask_1bpp = planar_bmp::PlanarBMP::from_contiguous_data(&object_data[mask_offset..(mask_offset + plane_len)], obj_header.width as usize, obj_header.height as usize, 1, &pal);
             filmstrip_image.blit(&object_image, 0, frame as usize * obj_header.height as usize);
-            if mask_bmp.is_some() {
+            if let Some(ref mut mask_bmp) = mask_bmp {
                 // Write the mask to a separate file.
-                mask_bmp.as_mut().unwrap().blit(&object_mask_1bpp, 0, frame as usize * obj_header.height as usize);
+                mask_bmp.blit(&object_mask_1bpp, 0, frame as usize * obj_header.height as usize);
             } else {
                 // Put it in the filmstrip image.
                 let object_mask_4bpp = planar_bmp::PlanarBMP::from_swizzle(&object_mask_1bpp, vec![0, 0, 0, 0]);
@@ -575,10 +573,10 @@ pub fn extract_graphics_set(script : &mut dyn std::io::Write, header_file : &mut
         }
         let mut output_file = File::create(out_path).unwrap();
         filmstrip_image.save_as_file(&mut output_file);
-        if mask_bmp.is_some() {
+        if let Some(mask_bmp) = mask_bmp {
             let mask_path = Path::new(mask_fname.as_ref().unwrap().as_str());
             let mut mask_file = File::create(mask_path).unwrap();
-            mask_bmp.unwrap().save_as_file(&mut mask_file);
+            mask_bmp.save_as_file(&mut mask_file);
         }
     }
 
@@ -621,16 +619,18 @@ pub fn create_graphics_set(lexer : &mut parser::Lexer) {
                 terrain_data.append(&mut terrain_bmp.get_plane_data(3, 0, 0, terrain_width, terrain_bmp.height));
 
                 let mask_offset = terrain_data.len();
-                if mask_fname.is_none() {
-                    // Extract the mask from the same bitmap.
-                    terrain_data.append(&mut terrain_bmp.get_plane_data(0, terrain_width, 0, terrain_width, terrain_bmp.height));
-                } else {
-                    let mut mask_file = std::fs::File::open(mask_fname.unwrap()).unwrap();
+                if let Some(mask_fname) = mask_fname {
+                    // Mask is in a separate bitmap
+                    let mut mask_file = std::fs::File::open(mask_fname).unwrap();
                     let mask_bmp = planar_bmp::PlanarBMP::from_file(&mut mask_file).unwrap();
                     assert_eq!(terrain_width, mask_bmp.width);
                     assert_eq!(terrain_bmp.height, mask_bmp.height);
                     terrain_data.append(&mut mask_bmp.get_plane_data(0, 0, 0, mask_bmp.width, mask_bmp.height));
+                } else {
+                    // Extract the mask from the same bitmap.
+                    terrain_data.append(&mut terrain_bmp.get_plane_data(0, terrain_width, 0, terrain_width, terrain_bmp.height));
                 }
+
 
                 terrain_headers.push(TerrainHeader {
                     width: terrain_bmp.width as u8,
@@ -649,11 +649,11 @@ pub fn create_graphics_set(lexer : &mut parser::Lexer) {
                 } else { None };
                 let mut object_file = std::fs::File::open(object_fname).unwrap();
                 let object_bmp = planar_bmp::PlanarBMP::from_file(&mut object_file).unwrap();
-                let object_width = if mask_fname.is_none() { object_bmp.width / 2 } else {object_bmp.width };
+                let object_width = if mask_fname.is_none() { object_bmp.width / 2 } else { object_bmp.width };
 
                 // Open a separate mask .bmp if one exists
-                let mask_bmp = if mask_fname.is_some() {
-                    let mut mask_file = std::fs::File::open(mask_fname.unwrap()).unwrap();
+                let mask_bmp = if let Some(mask_fname) = mask_fname {
+                    let mut mask_file = std::fs::File::open(mask_fname).unwrap();
                     let mask_bmp = planar_bmp::PlanarBMP::from_file(&mut mask_file).unwrap();
                     assert_eq!(mask_bmp.width, object_bmp.width);
                     assert_eq!(mask_bmp.height, object_bmp.height);
@@ -668,6 +668,7 @@ pub fn create_graphics_set(lexer : &mut parser::Lexer) {
                 object_header.animation_offset = object_data.len() as u16;
                 object_header.width = object_width as u8;
                 object_header.height = frame_height as u8;
+                // 5 planes (4 graphics, 1 mask) per frame.
                 object_header.animation_frame_data_size = ((object_bmp.width * frame_height / 8) * 5) as u16;
                 object_header.preview_frame_offset = object_header.animation_offset + (object_header.animation_frame_data_size * object_header.preview_frame_number as u16);
 
@@ -676,17 +677,20 @@ pub fn create_graphics_set(lexer : &mut parser::Lexer) {
                     object_data.append(&mut object_bmp.get_plane_data(1, 0, frame * frame_height, object_width, frame_height));
                     object_data.append(&mut object_bmp.get_plane_data(2, 0, frame * frame_height, object_width, frame_height));
                     object_data.append(&mut object_bmp.get_plane_data(3, 0, frame * frame_height, object_width, frame_height));
-                    if mask_bmp.is_none() {
+                    if let Some(ref mask_bmp) = mask_bmp {
+                        // Grab it from the mask .bmp
+                        object_data.append(&mut mask_bmp.get_plane_data(0, 0, frame * frame_height, object_width, frame_height));
+                    } else {
                         // Grab the mask from the main .bmp
                         object_data.append(&mut object_bmp.get_plane_data(0, object_width, frame * frame_height, object_width, frame_height));
-                    } else {
-                        // Grab it from the mask .bmp
-                        object_data.append(&mut mask_bmp.as_ref().unwrap().get_plane_data(0, 0, frame * frame_height, object_width, frame_height));
                     }
                 }
 
-                object_header.mask_offset = (0 * object_bmp.width * frame_height / 2) as u16;
-
+                // The mask offset is always 0. This is because:
+                // - the offset is relative to the _end_ of the frame's graphics data
+                // - we always store the mask immediately after the graphics data, for each frame.
+                // If, for example, we stored all of the masks at the end, this would be different.
+                object_header.mask_offset = 0_u16;
 
                 object_headers.push(object_header);
             }
