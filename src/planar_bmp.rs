@@ -192,6 +192,7 @@ impl PaletteRGB {
     /// Update num_colours contiguous elements from a slice of 6-bit VGA values.
     pub fn set_vga_data(&mut self, start_offset : usize, num_colours : usize, data : &[u8]) {
         for i in 0..num_colours {
+            #[allow(clippy::identity_op)]
             let vga_r = data[i*3+0];
             let vga_g = data[i*3+1];
             let vga_b = data[i*3+2];
@@ -201,6 +202,7 @@ impl PaletteRGB {
     pub fn from_vga_data(num_colours : usize, data : &[u8]) -> PaletteRGB {
         let mut out = PaletteRGB::default();
         for i in 0..num_colours {
+            #[allow(clippy::identity_op)]
             let vga_r = data[i*3+0];
             let vga_g = data[i*3+1];
             let vga_b = data[i*3+2];
@@ -211,11 +213,8 @@ impl PaletteRGB {
 
     /// Update num_colours contiguous elements from a slice of 2-bit EGA values.
     pub fn set_ega_data(&mut self, start_offset : usize, num_colours : usize, data : &[u8]) {
-        println!("set_ega_data: start {}, num {}", start_offset, num_colours);
-        for i in 0..num_colours {
-            let val = data[i];
+        for (i, &val) in data.iter().enumerate().take(num_colours) {
             self.colours[i+start_offset] = ColourRGB::ega_rgb(val);
-            println!("val = {:0b}, col = {:?}", val, self.colours[i+start_offset]);
         }
     }
 
@@ -223,8 +222,7 @@ impl PaletteRGB {
     #[allow(dead_code)]
     pub fn from_ega_data(num_colours : usize, data : &[u8]) -> PaletteRGB {
         let mut out = PaletteRGB::default();
-        for i in 0..num_colours {
-            let val = data[i];
+        for &val in data.iter().take(num_colours) {
             out.colours.push(ColourRGB::ega_rgb(val));
         }
         out
@@ -232,8 +230,7 @@ impl PaletteRGB {
     /// Write the first num_colours entries to a file in Windows BMP 'RGBQUADS' format.
     fn write_prefix_as_rgbquads(&self, writer : &mut dyn std::io::Write, num_colours : usize) -> std::io::Result::<()> {
         assert!(num_colours <= self.colours.len());
-        for i in 0..num_colours {
-            let entry = &self.colours[i];
+        for &entry in self.colours.iter().take(num_colours) {
             write_byte(entry.b, writer)?;
             write_byte(entry.g, writer)?;
             write_byte(entry.r, writer)?;
@@ -406,8 +403,7 @@ impl PlanarBMP {
 
         let pal = PaletteRGB::read_as_rgbquads(reader, bih.biClrUsed as usize)?;
 
-        let mut data = std::vec::Vec::<u8>::new();
-        data.resize((bih.biSizeImage) as usize, 0);
+        let mut data = vec![0; (bih.biSizeImage) as usize];
         reader.read_exact(&mut data)?;
 
         Ok(PlanarBMP::from_packed_data(&data[..], bih.biWidth as usize, bih.biHeight as usize, bih.biBitCount as usize, &pal))
@@ -457,7 +453,7 @@ impl PlanarBMP {
                 output.push(pixel_value);
             }
         }
-        return output;
+        output
     }
 
     pub fn get_plane_data(&self, plane : usize, x : usize, y : usize, w : usize, h : usize) -> Vec<u8> {
@@ -562,6 +558,7 @@ impl PlanarBMP {
     pub fn save_as_file(&self, writer : &mut dyn std::io::Write) {
         match self.planes {
             1 => self.save_as_bpp(1, writer),
+            #[allow(clippy::manual_range_patterns)]
             2 | 3 | 4 => self.save_as_bpp(4, writer),
             _ => self.save_as_pal8(writer),
         }
