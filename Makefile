@@ -26,7 +26,7 @@ SOURCES = src/modlem.rs \
 	  src/planar_bmp.rs
 
 $(BIN): $(SOURCES)
-	$(RUSTC) -o $@ $<
+	$(RUSTC) -o $@ src/modlem.rs
 
 .pseudo: clean
 
